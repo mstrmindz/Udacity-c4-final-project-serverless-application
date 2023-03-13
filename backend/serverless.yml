@@ -1,4 +1,4 @@
-# TODO: Change the name of the org 
+# TODO: Change the name of the org
 org: mstrmindz
 app: serverless-todo-app
 service: serverless-todo-app
@@ -13,7 +13,6 @@ provider:
   name: aws
   runtime: nodejs12.x
   #lambdaHashingVersion: '20201221'
-
   stage: dev
   region: us-east-1
 
@@ -21,19 +20,20 @@ provider:
     lambda: true
     apiGateway: true
 
-  # Use these variables in the functions and resouorces section below. For example, 
+  # Use these variables in the functions and resouorces section below. For example,
   # ${self:provider.environment.ATTACHMENT_S3_BUCKET}
   environment:
-    TODOS_TABLE: mstrmindz-todo-app-${self:provider.stage}
+    PROJECT_NAME: serverless-todo-app
+    TODOS_TABLE_INDEX: ${self:provider.environment.TODOS_CREATED_AT_INDEX}
+    TODOS_TABLE: serverless-todo-app-${self:provider.stage}
     TODOS_CREATED_AT_INDEX: CreatedAtIndex
-    ATTACHMENT_S3_BUCKET: mstrmindz-todo-app-images-${self:provider.stage}
+    ATTACHMENT_S3_BUCKET: serverless-todo-app-images-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
-    PROJECT_NAME: mstrmindz-todo-app
-    INDEX_NAME: ${self:provider.environment.TODOS_CREATED_AT_INDEX}
 
-logs:
-  # Enable API Gateway logs
+    logs:
+    # Enable API Gateway logs
   restApi: true
+
   iam:
     role:
       statements:
@@ -41,10 +41,9 @@ logs:
           Action:
             - xray:PutTelemetryRecords
             - xray:PutTraceSegments
-          Resource: "*"
+          Resource: '*'
 
-
-    functions:
+functions:
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
 
@@ -197,58 +196,57 @@ resources:
         RestApiId:
           Ref: ApiGatewayRestApi
 
-# Create a DynamoDB table with a local secondary index and a composite key
-Resources:
-  TodosTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: ${self:provider.environment.TODOS_TABLE}
-      BillingMode: PAY_PER_REQUEST
-      KeySchema:
-        - AttributeName: userId
-          KeyType: HASH
-        - AttributeName: todoId
-          KeyType: RANGE
-      AttributeDefinitions:
-        - AttributeName: userId
-          AttributeType: S
-        - AttributeName: todoId
-          AttributeType: S
-        - AttributeName: createdAt
-          AttributeType: S
-      LocalSecondaryIndexes:
-        - IndexName: ${self:provider.environment.TODOS_CREATED_AT_INDEX}
-          KeySchema:
-            - AttributeName: userId
-              KeyType: HASH
-            - AttributeName: createdAt
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
+# TODO: Create a DynamoDB table with local secondary index and a composite key
+TodosTable:
+  Type: AWS::DynamoDB::Table
+  Properties:
+    AttributeDefinitions:
+      - AttributeName: userId
+        AttributeType: S
+      - AttributeName: todoId
+        AttributeType: S
+      - AttributeName: createdAt
+        AttributeType: S
+    KeySchema:
+      - AttributeName: userId
+        KeyType: HASH
+      - AttributeName: todoId
+        KeyType: RANGE
+    BillingMode: PAY_PER_REQUEST
+    TableName: ${self:provider.environment.TODOS_TABLE}
+    LocalSecondaryIndexes:
+      - IndexName: ${self:provider.environment.TODOS_CREATED_AT_INDEX}
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: createdAt
+            KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
 
-    # TODO: Complete the bucket properties below.
-    # Do not forget to add the CorsConfiguration propoerty
-    AttachmentsBucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: ${self:provider.environment.ATTACHMENT_S3_BUCKET}
-        CorsConfiguration:
-          CorsRules:
-            - AllowedOrigins:
-                - '*'
-              AllowedHeaders:
-                - '*'
-              AllowedMethods:
-                - GET
-                - PUT
-                - POST
-                - DELETE
-                - HEAD
-              MaxAge: 300
+# TODO: Complete the bucket properties below.
+# Do not forget to add the CorsConfiguration propoerty
+AttachmentsBucket:
+  Type: AWS::S3::Bucket
+  Properties:
+    BucketName: ${self:provider.environment.ATTACHMENT_S3_BUCKET}
+    CorsConfiguration:
+      CorsRules:
+        - AllowedOrigins:
+            - '*'
+          AllowedHeaders:
+            - '*'
+          AllowedMethods:
+            - GET
+            - PUT
+            - POST
+            - DELETE
+            - HEAD
+          MaxAge: 300
               
     # TODO: Complete the policy below and attach it to the bucket defined above
     # For cross referencing the name of the bucket, use "!Ref AttachmentsBucket"
-  BucketPolicy:
+    BucketPolicy:
       Type: AWS::S3::BucketPolicy
       Properties:
         PolicyDocument:
