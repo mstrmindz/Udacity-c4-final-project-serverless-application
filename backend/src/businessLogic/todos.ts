@@ -7,12 +7,10 @@ import { createLogger } from '../utils/logger'
 import * as uuid from 'uuid'
 import * as createError from 'http-errors'
 
-// TODO: Implement businessLogic
 const logger = createLogger('TodosAccess')
 const attachmentUtils = new AttachmentUtils()
 const todosAccess = new TodosAccess()
 
-// create todo function
 export const createTodo = async (
   newTodo: CreateTodoRequest,
   userId: string
@@ -21,29 +19,26 @@ export const createTodo = async (
   const todoId = uuid.v4()
   const attachmentUrl = attachmentUtils.getAttachmentUrl(todoId)
   const createdAt = new Date().toString()
-  const newItem = {
+  const newItem: TodoItem = {
     userId,
     todoId,
     createdAt,
     attachmentUrl,
     done: false,
-    ...newTodo
+    ...newTodo,
+    attachmentId: undefined
   }
-
   return await todosAccess.createTodoItem(newItem)
 }
 
-// get todo function
 export async function getTodosForUser(userId: string): Promise<TodoItem[]> {
   try {
     return await todosAccess.getAllTodos(userId)
   } catch (error) {
-    createError('Error getting user todos ', error)
-    return error
+    throw createError(500, `Error getting user todos: ${error.message}`)
   }
 }
 
-// update todo function
 export async function updateTodo(
   todoId: string,
   userId: string,
@@ -53,7 +48,6 @@ export async function updateTodo(
   return await todosAccess.updateTodoItem(todoId, userId, updateTodoRequest)
 }
 
-// delete todo function
 export async function deleteTodo(
   todoId: string,
   userId: string
@@ -61,9 +55,8 @@ export async function deleteTodo(
   return await todosAccess.deleteTodoItem(todoId, userId)
 }
 
-// create attachment presigned url function
 export async function createAttachmentPresignedUrl(
   todoId: string
-): Promise<String> {
+): Promise<string> {
   return attachmentUtils.getUploadUrl(todoId)
 }

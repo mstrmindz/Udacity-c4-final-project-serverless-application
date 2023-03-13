@@ -1,71 +1,87 @@
-import { TodosAccess } from './todosAcess'
-import { AttachmentUtils } from '../businessLogic/attachmentUtils'
-import { TodoItem } from '../models/TodoItem'
-import { CreateTodoRequest } from '../requests/CreateTodoRequest'
-import { UpdateTodoRequest } from '../requests/UpdateTodoRequest'
+import * as AWS from 'aws-sdk'
+// import * as AWSXRay from 'aws-xray-sdk'
+import { DocumentClient } from 'aws-sdk/clients/dynamodb'
 import { createLogger } from '../utils/logger'
-import * as uuid from 'uuid'
-import * as createError from 'http-errors'
+import { TodoItem } from '../models/TodoItem'
+import { TodoUpdate } from '../models/TodoUpdate'
+var AWSXRay = require('aws-xray-sdk')
 
-// TODO: Implement businessLogic
+const XAWS = AWSXRay.captureAWS(AWS)
+
 const logger = createLogger('TodosAccess')
-const attachmentUtils = new AttachmentUtils()
-const todosAccess = new TodosAccess()
 
-// create todo function
-export const createTodo = async (
-  newTodo: CreateTodoRequest,
-  userId: string
-): Promise<TodoItem> => {
-  logger.info('Create todo function')
-  const todoId = uuid.v4()
-  const attachmentUrl = attachmentUtils.getAttachmentUrl(todoId)
-  const createdAt = new Date().toString()
-  const newItem = {
-    userId,
-    todoId,
-    createdAt,
-    attachmentUrl,
-    done: false,
-    ...newTodo
+// TODO: Implement the dataLayer logic
+export class TodosAccess {
+  constructor(
+    private readonly docClient: DocumentClient = new XAWS.DynamoDB.DocumentClient(),
+    private readonly todosTable = process.env.TODOS_TABLE,
+    private readonly todosIndex = process.env.INDEX_NAME
+  ) {}
+
+  async getAllTodos(userId: string): Promise<TodoItem[]> {
+    logger.info('Get all todos func')
+
+    const result = await this.docClient
+      .query({
+        TableName: this.todosTable,
+        IndexName: this.todosIndex,
+        KeyConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: {
+          ':userId': userId
+        }
+      })
+      .promise()
+
+    const items = result.Items
+    return items as TodoItem[]
   }
 
-  return await todosAccess.createTodoItem(newItem)
-}
+  async createTodoItem(todoItem: TodoItem): Promise<TodoItem> {
+    logger.info('Create todo item func')
 
-// get todo function
-export async function getTodosForUser(userId: string): Promise<TodoItem[]> {
-  try {
-    return await todosAccess.getAllTodos(userId)
-  } catch (error) {
-    createError('Error getting user todos ', error)
-    return error
+    await this.docClient
+      .put({
+        TableName: this.todosTable,
+        Item: todoItem
+      })
+      .promise()
+
+    return todoItem as TodoItem
+  }
+
+  async updateTodoItem(
+    todoId: string,
+    userId: string,
+    todoUpdate: TodoUpdate
+  ): Promise<void> {
+    logger.info(`Updating todo id: ${todoId}`)
+    await this.docClient
+      .update({
+        TableName: this.todosTable,
+        Key: { userId, todoId },
+        ConditionExpression: 'attribute_exists(todoId)',
+        UpdateExpression: 'set #n = :n, dueDate = :due, done = :dn',
+        ExpressionAttributeNames: { '#n': 'name' },
+        ExpressionAttributeValues: {
+          ':n': todoUpdate.name,
+          ':due': todoUpdate.dueDate,
+          ':dn': todoUpdate.done
+        }
+      })
+      .promise()
+  }
+
+  async deleteTodoItem(todoId: string, userId: string): Promise<void> {
+    logger.info('Delete todo item func')
+
+    await this.docClient
+      .delete({
+        TableName: this.todosTable,
+        Key: {
+          todoId,
+          userId
+        }
+      })
+      .promise()
   }
 }
-
-// update todo function
-export async function updateTodo(
-  todoId: string,
-  userId: string,
-  updateTodoRequest: UpdateTodoRequest
-): Promise<void> {
-  createLogger('Updating todo')
-  return await todosAccess.updateTodoItem(todoId, userId, updateTodoRequest)
-}
-
-// delete todo function
-export async function deleteTodo(
-  todoId: string,
-  userId: string
-): Promise<void> {
-  return await todosAccess.deleteTodoItem(todoId, userId)
-}
-
-// create attachment presigned url function
-export async function createAttachmentPresignedUrl(
-  todoId: string
-): Promise<String> {
-  return attachmentUtils.getUploadUrl(todoId)
-}
-export { TodosAccess }
-

@@ -2,7 +2,7 @@
 org: mstrmindz
 app: serverless-todo-app
 service: serverless-todo-app
-frameworkVersion: '3.28.1'
+frameworkVersion: '3'
 
 plugins:
   - serverless-webpack
