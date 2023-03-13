@@ -20,7 +20,7 @@ export const handler = async (
   logger.info('Authorizing a user', event.authorizationToken)
   try {
     const jwtToken = await verifyToken(event.authorizationToken)
-    logger.info('User was authorized', jwtToken)
+    logger.info('User is authorized', jwtToken)
 
     return {
       principalId: jwtToken.sub,
@@ -36,7 +36,7 @@ export const handler = async (
       }
     }
   } catch (e) {
-    logger.error('User not authorized', { error: e.message })
+    logger.error('User is unauthorized', { error: e.message })
 
     return {
       principalId: 'user',
@@ -62,22 +62,23 @@ async function verifyToken(authHeader: string): Promise<JwtPayload> {
   // TODO: Implement token verification
   // You should implement it similarly to how it was implemented for the exercise for the lesson 5
   // You can read more about how to do this here: https://auth0.com/blog/navigating-rs256-and-jwks/
-  const response =await Axios.get(jwksUrl)
+  const response = await Axios.get(jwksUrl)
   const keys = response.data.keys
-  const signingkeys = keys.find(key => key.id === jwt.header.kid)
-  logger.info('signingkeys', signingkeys)
-  if (!signingkeys) {
-    throw new Error('The JWKS endpoint did not contain any keys')
-    }
-    // get pem data
-    const pemData = signingkeys.xSc[0]
-    // convert pem data
-    const cert = `-----BEGIN CERTIFICATE-----\n${pemData}\n-----END CERTIFICATE-----`
-    // verify token
-    const verifiedToken = verify(token, cert, { algorithms:[`RS256`] }) as JwtPayload
-    logger.info('verifiedToken', verifiedToken)
-    return verifiedToken
- 
+  const signingKeys = keys.find((key) => key.kid === jwt.header.kid)
+  logger.info('signingKeys', signingKeys)
+  if (!signingKeys) {
+    throw new Error('The JWKS end point did not contain any keys')
+  }
+  //  get pem data
+  const pemData = signingKeys.x5c[0]
+  //convert pem data to cert
+  const cert = `-----BEGIN CERTIFICATE-----\n${pemData}\n-----END CERTIFICATE-----`
+  //VERIFY TOKEN
+  const verifiedToken = verify(token, cert, {
+    algorithms: ['RS256']
+  }) as JwtPayload
+  logger.info('verifiedToken', verifiedToken)
+  return verifiedToken
 }
 
 function getToken(authHeader: string): string {

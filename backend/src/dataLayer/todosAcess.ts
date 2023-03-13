@@ -1,5 +1,5 @@
-import { TodosAccess } from '../dataLayer/todosAcess'
-import { AttachmentUtils } from './attachmentUtils'
+import { TodosAccess } from './todosAcess'
+import { AttachmentUtils } from '../businessLogic/attachmentUtils'
 import { TodoItem } from '../models/TodoItem'
 import { CreateTodoRequest } from '../requests/CreateTodoRequest'
 import { UpdateTodoRequest } from '../requests/UpdateTodoRequest'
@@ -67,3 +67,5 @@ export async function createAttachmentPresignedUrl(
 ): Promise<String> {
   return attachmentUtils.getUploadUrl(todoId)
 }
+export { TodosAccess }
+
