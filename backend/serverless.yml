@@ -2,7 +2,7 @@
 org: mstrmindz
 app: serverless-todo-app
 service: serverless-todo-app
-frameworkVersion: '3'
+frameworkVersion: '3.28.1'
 
 plugins:
   - serverless-webpack
@@ -30,9 +30,10 @@ provider:
     ATTACHMENT_S3_BUCKET: serverless-todo-app-images-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
 
-    logs:
+logs:
     # Enable API Gateway logs
   restApi: true
+  httpApi: true
 
   iam:
     role:
@@ -197,7 +198,7 @@ resources:
           Ref: ApiGatewayRestApi
 
 # TODO: Create a DynamoDB table with local secondary index and a composite key
-TodosTable:
+
   Type: AWS::DynamoDB::Table
   Properties:
     AttributeDefinitions:
