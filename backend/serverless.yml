@@ -12,7 +12,7 @@ plugins:
 provider:
   name: aws
   runtime: nodejs12.x
-  #lambdaHashingVersion: '20201221'
+
   stage: dev
   region: us-east-1
 
@@ -33,7 +33,6 @@ provider:
 logs:
     # Enable API Gateway logs
   restApi: true
-  httpApi: true
 
   iam:
     role:
@@ -226,7 +225,7 @@ resources:
           ProjectionType: ALL
 
 # TODO: Complete the bucket properties below.
-# Do not forget to add the CorsConfiguration propoerty
+# Do not forget to add the CorsConfiguration property
 AttachmentsBucket:
   Type: AWS::S3::Bucket
   Properties:

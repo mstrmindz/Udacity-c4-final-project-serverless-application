@@ -15,6 +15,9 @@ export const handler = middy(
 
     return {
       statusCode: 202,
+      headers: {
+        'Access-Control-Allow-Origin': '*'
+      },
       body: JSON.stringify({
         uploadUrl: url
       })

@@ -1,5 +1,4 @@
 export interface TodoItem {
-  attachmentId: any
   userId: string
   todoId: string
   createdAt: string
