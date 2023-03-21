@@ -751,5 +751,8 @@
             "name": "yamllint",
             "url": "https://github.com/adrienverge/yamllint"
         }
-    }
+    },
+    "cSpell.words": [
+        "gatewayresponse"
+    ]
 }
